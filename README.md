@@ -44,6 +44,7 @@ EcoTrueque/
 
 ```bash
  Frontend
+cd src
 npm install
 npm run dev
 
