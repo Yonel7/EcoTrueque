@@ -39,14 +39,15 @@ EcoTrueque/
 │ ├── services/
 │ └── contexts/
 └── README.md
+
 ## 🚀 Cómo ejecutar el proyecto
 
-## Frontend
+```bash
+ Frontend
 npm install
 npm run dev
 
-### Backend
-```bash
+  Backend
 activar mongodb
 cd backend
 npm install
