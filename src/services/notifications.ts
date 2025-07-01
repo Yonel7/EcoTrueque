@@ -32,3 +32,8 @@ export const markAllAsRead = async () => {
   const response = await api.put('/notifications/mark-all-read');
   return response.data;
 };
+
+export const deleteAllNotifications = async () => {
+  const response = await api.delete('/notifications/all');
+  return response.data;
+};

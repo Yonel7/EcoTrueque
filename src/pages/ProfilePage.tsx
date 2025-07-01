@@ -6,6 +6,7 @@ import AddProductModal from '../components/AddProductModal';
 import EditProductModal from '../components/EditProductModal';
 import TradeMessaging from '../components/TradeMessaging';
 import RatingModal from '../components/RatingModal';
+import ProfilePhotoUpload from '../components/ProfilePhotoUpload';
 import * as productService from '../services/products';
 import * as tradeService from '../services/trades';
 import * as ratingService from '../services/ratings';
@@ -60,7 +61,7 @@ interface Rating {
 }
 
 const ProfilePage = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('products');
   const [userProducts, setUserProducts] = useState<Product[]>([]);
@@ -93,6 +94,7 @@ const ProfilePage = () => {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsError, setSettingsError] = useState('');
   const [settingsSuccess, setSettingsSuccess] = useState('');
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -237,6 +239,23 @@ const ProfilePage = () => {
     fetchUserRatings();
   };
 
+  const handleAvatarUpdate = async (file: File) => {
+    try {
+      setAvatarLoading(true);
+      const response = await authService.updateAvatar(file);
+      
+      // Update user context and localStorage
+      updateUser(response);
+      
+      setSettingsSuccess('Foto de perfil actualizada correctamente');
+    } catch (error: any) {
+      console.error('Error updating avatar:', error);
+      setSettingsError(error.response?.data?.message || 'Error al actualizar la foto de perfil');
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
   const handleSettingsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSettingsError('');
@@ -262,7 +281,7 @@ const ProfilePage = () => {
         updateData.newPassword = settingsForm.newPassword;
       }
 
-      await authService.updateProfile(updateData);
+      const response = await authService.updateProfile(updateData);
       setSettingsSuccess('Perfil actualizado correctamente');
       
       // Clear password fields
@@ -272,18 +291,8 @@ const ProfilePage = () => {
         newPassword: ''
       }));
 
-      // Update user context if needed
-      const updatedUser = {
-        ...user!,
-        name: settingsForm.name,
-        email: settingsForm.email,
-        location: settingsForm.location,
-        bio: settingsForm.bio,
-        phone: settingsForm.phone
-      };
-      
-      // Update localStorage
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      // Update user context
+      updateUser(response);
       
     } catch (error: any) {
       console.error('Error updating profile:', error);
@@ -371,8 +380,18 @@ const ProfilePage = () => {
         <div className="bg-green-600 px-6 py-8 text-white">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center mb-4 md:mb-0">
-              <div className="bg-white p-2 rounded-full mr-4">
-                <User className="h-12 w-12 text-green-600" />
+              <div className="mr-4">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar.startsWith('http') ? user.avatar : `http://localhost:5000${user.avatar}`}
+                    alt="Foto de perfil"
+                    className="w-16 h-16 rounded-full object-cover border-4 border-white"
+                  />
+                ) : (
+                  <div className="bg-white p-2 rounded-full">
+                    <User className="h-12 w-12 text-green-600" />
+                  </div>
+                )}
               </div>
               <div>
                 <h1 className="text-2xl font-bold">{user.name}</h1>
@@ -767,6 +786,16 @@ const ProfilePage = () => {
             <div>
               <h2 className="text-xl font-semibold text-gray-800 mb-6">Configuración de Perfil</h2>
               
+              {/* Profile Photo Section */}
+              <div className="mb-8 p-6 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Foto de Perfil</h3>
+                <ProfilePhotoUpload
+                  currentPhoto={user.avatar}
+                  onPhotoUpdate={handleAvatarUpdate}
+                  loading={avatarLoading}
+                />
+              </div>
+
               {settingsSuccess && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-sm text-green-700">{settingsSuccess}</p>

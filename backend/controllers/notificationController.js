@@ -36,6 +36,15 @@ export const markAllNotificationsAsRead = async (req, res) => {
   }
 };
 
+export const deleteAllNotifications = async (req, res) => {
+  try {
+    await Notification.deleteMany({ recipient: req.user._id });
+    res.json({ message: 'Todas las notificaciones eliminadas' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar notificaciones', error: error.message });
+  }
+};
+
 export const createNotification = async (recipientId, senderId, type, title, message, data = {}) => {
   try {
     const notification = new Notification({

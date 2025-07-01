@@ -74,3 +74,15 @@ export const updateProfile = async (data: UpdateProfileData): Promise<AuthRespon
   const response = await api.put('/auth/profile', data);
   return response.data;
 };
+
+export const updateAvatar = async (file: File): Promise<AuthResponse> => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  
+  const response = await api.put('/auth/avatar', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};

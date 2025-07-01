@@ -3,12 +3,14 @@ import {
   register, 
   login, 
   updateProfile, 
+  updateAvatar,
   googleAuth, 
   facebookAuth, 
   forgotPassword, 
   resetPassword 
 } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
+import upload from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -22,5 +24,6 @@ router.post('/reset-password', resetPassword);
 
 // Rutas protegidas
 router.put('/profile', protect, updateProfile);
+router.put('/avatar', protect, upload.single('avatar'), updateAvatar);
 
 export default router;

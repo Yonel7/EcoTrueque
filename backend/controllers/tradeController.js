@@ -72,6 +72,7 @@ export const respondToTrade = async (req, res) => {
 
     if (accept) {
       trade.status = 'aceptado';
+      trade.acceptedAt = new Date();
       
       // Create notification for requester
       await createNotification(
@@ -119,10 +120,10 @@ export const completeTrade = async (req, res) => {
       _id: req.params.id,
       $or: [{ requester: req.user._id }, { owner: req.user._id }],
       status: 'aceptado'
-    });
+    }).populate('requester', 'name').populate('owner', 'name');
 
     if (!trade) {
-      return res.status(404).json({ message: 'Trueque no encontrado' });
+      return res.status(404).json({ message: 'Trueque no encontrado o no está en estado aceptado' });
     }
 
     trade.status = 'completado';
@@ -130,22 +131,34 @@ export const completeTrade = async (req, res) => {
     await trade.save();
 
     // Create notification for the other user
-    const otherUserId = trade.requester.toString() === req.user._id.toString() 
-      ? trade.owner 
-      : trade.requester;
+    const otherUserId = trade.requester._id.toString() === req.user._id.toString() 
+      ? trade.owner._id 
+      : trade.requester._id;
+
+    const otherUserName = trade.requester._id.toString() === req.user._id.toString() 
+      ? trade.owner.name 
+      : trade.requester.name;
 
     await createNotification(
       otherUserId,
       req.user._id,
       'trade_completed',
       'Intercambio completado',
-      `El intercambio ha sido marcado como completado`,
+      `${req.user.name} ha marcado el intercambio como completado`,
       { tradeId: trade._id }
     );
 
-    res.json(trade);
+    // Populate the trade before sending response
+    const populatedTrade = await Trade.findById(trade._id)
+      .populate('productOffered')
+      .populate('productRequested')
+      .populate('requester', 'name rating totalRatings')
+      .populate('owner', 'name rating totalRatings');
+
+    res.json(populatedTrade);
   } catch (error) {
-    res.status(400).json({ message: 'Error al completar trueque', error: error.message });
+    console.error('Error completing trade:', error);
+    res.status(500).json({ message: 'Error al completar trueque', error: error.message });
   }
 };
 

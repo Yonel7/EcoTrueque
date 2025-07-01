@@ -47,6 +47,7 @@ export const register = async (req, res) => {
       phone: user.phone,
       rating: user.rating,
       totalRatings: user.totalRatings,
+      avatar: user.avatar,
       token
     });
   } catch (error) {
@@ -84,6 +85,7 @@ export const login = async (req, res) => {
       phone: user.phone,
       rating: user.rating,
       totalRatings: user.totalRatings,
+      avatar: user.avatar,
       token
     });
   } catch (error) {
@@ -277,6 +279,7 @@ export const resetPassword = async (req, res) => {
       phone: user.phone,
       rating: user.rating,
       totalRatings: user.totalRatings,
+      avatar: user.avatar,
       token: authToken
     });
   } catch (error) {
@@ -327,10 +330,47 @@ export const updateProfile = async (req, res) => {
       bio: user.bio,
       phone: user.phone,
       rating: user.rating,
-      totalRatings: user.totalRatings
+      totalRatings: user.totalRatings,
+      avatar: user.avatar
     });
   } catch (error) {
     console.error('Error updating profile:', error);
     res.status(500).json({ message: 'Error al actualizar perfil', error: error.message });
+  }
+};
+
+export const updateAvatar = async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: 'Usuario no autenticado' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No se ha subido ninguna imagen' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Update avatar path
+    user.avatar = `/uploads/${req.file.filename}`;
+    await user.save();
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      location: user.location,
+      bio: user.bio,
+      phone: user.phone,
+      rating: user.rating,
+      totalRatings: user.totalRatings,
+      avatar: user.avatar
+    });
+  } catch (error) {
+    console.error('Error updating avatar:', error);
+    res.status(500).json({ message: 'Error al actualizar foto de perfil', error: error.message });
   }
 };
